@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jp.takawitter.iptalk4j;
+package jp.takawitter.iptalk4j.udp;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

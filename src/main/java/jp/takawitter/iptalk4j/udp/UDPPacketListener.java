@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jp.takawitter.iptalk4j;
+package jp.takawitter.iptalk4j.udp;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
 import java.util.EventListener;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-public class EventLIstenerListTest {
-	interface Listener extends EventListener{
-		void onEvent(int value);
-	}
-	@Test
-	public void test(){
-		EventListenerList<Listener> listeners = new EventListenerList<>(Listener.class);
-		final AtomicInteger val = new AtomicInteger(0);
-		listeners.add(new Listener(){
-			@Override
-			public void onEvent(int value) {
-				val.set(value);
-			}
-		});
-		listeners.fire().onEvent(100);
-		Assert.assertEquals(100, val.get());
-	}
+public interface UDPPacketListener extends EventListener {
+	void onReceive(DatagramPacket packet);
+	default void onException(IOException exception){}
 }

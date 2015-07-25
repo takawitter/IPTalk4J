@@ -13,13 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jp.takawitter.iptalk4j;
+package jp.takawitter.iptalk4j.udp;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
-import java.util.EventListener;
 
-public interface UDPPacketListener extends EventListener {
-	void onReceive(DatagramPacket packet);
-	void onException(IOException exception);
+import org.junit.Test;
+
+import jp.takawitter.iptalk4j.udp.UDPPacketListener;
+import jp.takawitter.iptalk4j.udp.UDPPacketMonitor;
+
+public class UDPPacketMonitorTest {
+	@Test
+	public void test() throws Throwable{
+		UDPPacketMonitor.registerListener(6711, new UDPPacketListener() {
+			@Override
+			public void onReceive(DatagramPacket packet) {
+			}
+		});
+		UDPPacketMonitor.shutdown();
+	}
 }

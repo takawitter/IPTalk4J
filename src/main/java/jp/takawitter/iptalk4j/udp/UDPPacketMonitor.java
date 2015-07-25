@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jp.takawitter.iptalk4j;
+package jp.takawitter.iptalk4j.udp;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -40,7 +40,7 @@ public class UDPPacketMonitor {
 					}
 				}
 			});
-			thread.setDaemon(true);
+//			thread.setDaemon(true);
 			thread.start();
 		}
 		public void addListener(UDPPacketListener listener){
@@ -72,7 +72,7 @@ public class UDPPacketMonitor {
 		c.addListener(listener);
 	}
 
-	public static synchronized void removeListener(int port, UDPPacketListener listener)
+	public static synchronized void unregisterListener(int port, UDPPacketListener listener)
 	throws InterruptedException{
 		ListenerContext c = contexts.get(port);
 		if(c == null) return;
@@ -81,6 +81,12 @@ public class UDPPacketMonitor {
 			c.close();
 			contexts.remove(port);
 		}
+	}
+
+	public static synchronized void shutdown()
+	throws InterruptedException{
+		for(ListenerContext c : contexts.values()) c.close();
+		contexts.clear();
 	}
 
 	public static void setBufferSize(int bufferSize){
