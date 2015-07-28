@@ -16,7 +16,6 @@
 package jp.takawitter.iptalk4j;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -27,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import jp.takawitter.iptalk4j.udp.UDPPacketListener;
 import jp.takawitter.iptalk4j.udp.UDPPacketMonitor;
+import jp.takawitter.iptalk4j.util.java.net.DatagramPacketUtil;
 
 public class IPTalk {
 	public static void registerMainWindowDisplayListener(int channel, final TextListener listener)
@@ -34,21 +34,14 @@ public class IPTalk {
 		UDPPacketListener l = new UDPPacketListener() {
 			@Override
 			public void onReceive(DatagramPacket packet) {
-				try {
-					String text = new String(packet.getData(),
-							packet.getOffset(),
-							packet.getLength(),
-							"Windows-31J");
-					if(text.equals("$改行$") || text.equals("$null$")){
-						text = "";
-					}
-					listener.onReceive(
-							(InetSocketAddress)packet.getSocketAddress(),
-							text
-							);
-				} catch (UnsupportedEncodingException e) {
-					throw new RuntimeException(e);
+				String text = DatagramPacketUtil.getDataAsWindows31JString(packet);
+				if(text.equals("$改行$") || text.equals("$null$")){
+					text = "";
 				}
+				listener.onReceive(
+						(InetSocketAddress)packet.getSocketAddress(),
+						text
+						);
 			}
 			@Override
 			public void onException(IOException exception) {
@@ -74,6 +67,40 @@ public class IPTalk {
 		DatagramPacket p = new DatagramPacket(b, b.length);
 		p.setSocketAddress(new InetSocketAddress(to, 6711 + (channel - 1) * 100));
 		socket.send(p);
+	}
+
+	public static void registerMemberSearchListener(int channel, MemberSearchListener listener)
+	throws SocketException{
+		UDPPacketListener l = new UDPPacketListener() {
+			@Override
+			public void onReceive(DatagramPacket packet) {
+				String[] data = DatagramPacketUtil.getDataAsWindows31JString(packet).split(",");
+				MemberSearchResponse res = listener.onReceive(
+						(InetSocketAddress)packet.getSocketAddress(), data[1], Integer.parseInt(data[3]));
+				if(res.isAccept()){
+					try{
+						String r = InetAddress.getLocalHost().getHostAddress() +
+								"," + packet.getAddress().toString().substring(1) + "," + res.getName() + ",Ans";
+						DatagramPacket p = DatagramPacketUtil.createFromWindows31JString(r);
+						p.setAddress(packet.getAddress());
+						p.setPort(6718);
+						getSocket().send(p);
+					} catch (IOException e) {
+						listener.onException(e);
+					}
+				}
+			}
+		};
+		UDPPacketMonitor.registerListener(6722 + (channel - 1) * 100, l);
+		listeners.put(listener, l);
+	}
+
+	public static void unregsiterMemberSearchListener(int channel, MemberSearchListener listener)
+	throws InterruptedException{
+		UDPPacketListener l = listeners.remove(listener);
+		if(l != null){
+			UDPPacketMonitor.unregisterListener(6722 + (channel - 1) * 100, l);
+		}
 	}
 
 	public static synchronized void shutdown() throws InterruptedException{

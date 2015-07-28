@@ -35,12 +35,16 @@ public class UDPPacketMonitor {
 							socket.receive(packet);
 							listeners.fire().onReceive(packet);
 						}
+					} catch(SocketException e){
+						if(!e.getMessage().equals("Socket closed")){
+							listeners.fire().onException(e);
+						}
 					} catch (IOException e) {
 						listeners.fire().onException(e);
 					}
 				}
 			});
-//			thread.setDaemon(true);
+			thread.setDaemon(true);
 			thread.start();
 		}
 		public void addListener(UDPPacketListener listener){
